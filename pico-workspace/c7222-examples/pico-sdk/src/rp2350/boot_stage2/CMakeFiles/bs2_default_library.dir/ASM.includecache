@@ -1,0 +1,10 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/sylvie/Documents/University/embedded-cpp-2026/pico-workspace/pico-workspace/c7222-development/build/pico-sdk/src/rp2350/boot_stage2/bs2_default_padded_checksummed.S
+
