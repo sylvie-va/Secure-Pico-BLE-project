@@ -1,0 +1,3 @@
+[submodule "pico-workspace/c7222-development"]
+	path = pico-workspace/c7222-development
+	url = https://github.com/yusein-ali/c7222-development.git

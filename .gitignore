@@ -1,0 +1,40 @@
+# ignore core repository
+c7222-development/
+# ignore everything except the templates
+*
+!.gitignore
+!Module_5/
+!Module_5/**
+!Module_6/
+!Module_6/**
+!Module_7/
+!Module_7/**
+!Module_8/
+!Module_8/**
+!Module_9/
+!Module_9/**
+!Module_10/
+!Module_10/**
+!T5_*/
+!T5_*/**
+!T6_*/
+!T6_*/**
+!T7_*/
+!T7_*/**
+!T8_*/
+!T8_*/**
+!T9_*/
+!T9_*/**
+!T10_*/
+!T10_*/**
+
+# Ignore zip files
+*.zip
+
+# Ignore build directories
+build/
+
+# VScode
+.vscode/
+.idea/
+c7222-development/
