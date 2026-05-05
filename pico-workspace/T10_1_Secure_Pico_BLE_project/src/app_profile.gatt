@@ -1,0 +1,14 @@
+// Template GATT profile for ELEC C7222 Module 10 Task 10.1.
+// The database exposes the Immediate Alert Service and the Alert Notification
+// Service.
+
+PRIMARY_SERVICE, GAP_SERVICE
+CHARACTERISTIC, GAP_DEVICE_NAME, READ, "FindMe-11"
+
+PRIMARY_SERVICE, GATT_SERVICE
+CHARACTERISTIC, GATT_DATABASE_HASH, READ,
+
+// TODO: Add the Immediate Alert Service and the Alert Notification Service.
+// TODO: Add the required characteristics, user descriptions, and security flags.
+
+
