@@ -293,6 +293,7 @@ void OnBleStackOn() {
  	// TODO: - observe connection-state transitions and notify the application objects,
  	// TODO: - process button events delivered through the event group, and
  	// - update the status LED while the device is not connected.
+
 	while(true) {
 		if (gap->IsAdvertisingEnabled()){
             g_onboard_led->Toggle();
@@ -301,6 +302,9 @@ void OnBleStackOn() {
         } else {
             g_onboard_led->Off();
         }
+
+		//HandleButtonPress(g_att_server->IsConnected(), alert notification service gets passed here); // TODO: handle button presses & set up ANS object
+
 		c7222::FreeRtosTask::Delay(c7222::FreeRtosTask::MsToTicks(250));
 	}
 	
