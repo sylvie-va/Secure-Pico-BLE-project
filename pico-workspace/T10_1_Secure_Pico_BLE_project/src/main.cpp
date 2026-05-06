@@ -92,6 +92,13 @@ static GapEventHandler g_gap_event_handler;
 /** @brief Security Manager callback helper used by the example flow. */
 static SecurityEventHandler g_security_event_handler;
 
+
+/**
+ * @brief Global pointer to the on-board LED controller.
+ */
+static c7222::OnBoardLED* g_onboard_led = nullptr;
+
+
 /**
  * @brief Configure GAP advertising for the project device.
  *
@@ -107,29 +114,30 @@ static SecurityEventHandler g_security_event_handler;
  * after the BLE stack reports that it is ready.
  */
 void ConfigureAdvertisement() {
-	// TODO: configure advertising.
+	// configure advertising.
 	auto* ble = c7222::Ble::GetInstance();
-
 	auto* gap = ble->GetGap();
 
 	gap->AddEventHandler(g_gap_event_handler);
 
 	// 3. Configure the advertising flags and device name.
 
-
+	ble->SetAdvertisementFlags(
+        c7222::AdvertisementData::Flags::kLeGeneralDiscoverableMode |
+        c7222::AdvertisementData::Flags::kBrEdrNotSupported
+	);
+    ble->SetDeviceName(kDeviceName);
 	
 	// 4. Set advertising parameters.
 	// 5. Start advertising.
 	c7222::Gap::AdvertisementParameters params;
-    params.advertising_type = c7222::Gap::AdvertisingType::kAdvInd;
-    params.min_interval = 320;
-    params.max_interval = 400;
-	
+    //params.advertising_type = c7222::Gap::AdvertisingType::kAdvInd;
+	//params.min_interval = 320;
+    //params.max_interval = 400;
     gap->SetAdvertisingParameters(params);
     gap->StartAdvertising();
 
     std::cout << "Advertising'" << kDeviceName << "'\n";
-
 }
 
 /**
@@ -218,7 +226,7 @@ void HandleButtonPress(bool connected, AlertNotificationService& alert_notificat
  * advertising.
  */
 void OnBleStackOn() {
-	
+	ConfigureAdvertisement();
 }
 
 /**
@@ -244,18 +252,55 @@ void OnBleStackOn() {
  * @param params Unused FreeRTOS task parameter.
  */
 [[noreturn]] void BleTask(void* /*params*/) {
-	// TODO: implement the main BLE application task.
-
 	// 1. Get the BLE instance.
 	auto* ble = c7222::Ble::GetInstance();
+	if (ble == nullptr) {
+		std::cout << "ble_app_task nullptr" << std::endl;
+		while (true) {
+			c7222::FreeRtosTask::Delay(c7222::FreeRtosTask::MsToTicks(1000)); // need to wait on certain devices tested, else startup fails
+		}
+	}
 
 	// 2. enable security,
+	ble->EnableSecurityManager(c7222::SecurityManager::SecurityParameters()); // I think this works ? It might not.
+
 	// 3. enable the Attribute Server with the compiled profile
-	ble->EnableSecurityManager();
-	ble->EnableAttributeServer();
+	ble->EnableAttributeServer(profile_data);
+
+	// 4. connect the GAP handler to the Attribute Server,
+	g_gap_event_handler.SetAttributeServer(g_att_server);
+
+
+ 	// 5. configure board I/O,
+	ConfigureBoardOutputs();
+ 	
+	// * TODO: 6. resolve the project services from the parsed GATT database,
+ 	auto gattObj = ResolveGattObjects();
+	
+	// * TODO: 7. construct the application-side service objects,
+
+
+ 	// * 8. turn on the BLE stack
+	ble->SetOnBleStackOnCallback(OnBleStackOn); // 8_4 & 8_5 call ConfigureAdvertising directly. Not sure what benefit there is to using OnBleStackOn to just call ConfigureAdvertising
+	ble->TurnOn();
+
 	
 	(void)g_att_server;
+
+	auto* gap = ble->GetGap();
+
+	// Inside the loop, the task has three responsibilities:
+ 	// TODO: - observe connection-state transitions and notify the application objects,
+ 	// TODO: - process button events delivered through the event group, and
+ 	// - update the status LED while the device is not connected.
 	while(true) {
+		if (gap->IsAdvertisingEnabled()){
+            g_onboard_led->Toggle();
+        } else if (g_att_server->IsConnected()) {
+            g_onboard_led->On();
+        } else {
+            g_onboard_led->Off();
+        }
 		c7222::FreeRtosTask::Delay(c7222::FreeRtosTask::MsToTicks(250));
 	}
 	
@@ -290,12 +335,15 @@ void OnBleStackOn() {
     std::printf("Platform initialized.\n");
 
 	// 5. Create the BLE application task.
-    g_ble_task.Initialize(
+    if (!g_ble_task.Initialize(
         "BLE_Task",
         1024,
         c7222::FreeRtosTask::IdlePriority() + 1,
         BleTask,
-        nullptr);
+        nullptr)) {
+			printf("Failed to initialize BLE Task");
+			return -2;
+		}
 
 	// 6. Start the scheduler.
     c7222::FreeRtosTask::StartScheduler();
