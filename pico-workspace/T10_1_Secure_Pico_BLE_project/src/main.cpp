@@ -157,8 +157,20 @@ void ConfigureAdvertisement() {
  * @param ble BLE facade used to access the Security Manager subsystem.
  */
 void ConfigureSecurityManager(c7222::Ble* ble) {
-	// TODO: configure BLE security.
+	c7222::SecurityManager::SecurityParameters parameters;
 	
+	parameters.io_capability = c7222::SecurityManager::IoCapability::kDisplayOnly; // I/O must be picked explicitly - DisplayOnly suggested in course's plus.cs.aalto
+
+	parameters.authentication = c7222::SecurityManager::AuthenticationRequirement::kSecureConnections | // TODO: not sure about this? It looked right
+	                         c7222::SecurityManager::AuthenticationRequirement::kMitmProtection; // require authenticated pairing with MITM protection
+
+	parameters.gatt_client_required_security_level = c7222::SecurityManager::GattClientSecurityLevel::kLevel4; // TODO: not sure about this level
+
+	c7222::SecurityManager *SecurityManager = ble->EnableSecurityManager(parameters); // I think this works ?
+
+	g_security_event_handler.SetSecurityManager(SecurityManager); // could just move ble->EnableSecurityManager(parameters) in here since it's only used once
+
+	ble->AddSecurityEventHandler(&g_security_event_handler);
 }
 
 /**
@@ -262,7 +274,7 @@ void OnBleStackOn() {
 	}
 
 	// 2. enable security,
-	ble->EnableSecurityManager(c7222::SecurityManager::SecurityParameters()); // I think this works ? It might not.
+	ConfigureSecurityManager(ble); // CSM  enables the security
 
 	// 3. enable the Attribute Server with the compiled profile
 	ble->EnableAttributeServer(profile_data);
