@@ -8,7 +8,15 @@ CHARACTERISTIC, GAP_DEVICE_NAME, READ, "FindMe-11"
 PRIMARY_SERVICE, GATT_SERVICE
 CHARACTERISTIC, GATT_DATABASE_HASH, READ,
 
-// TODO: Add the Immediate Alert Service and the Alert Notification Service.
+// TODO: Immediate Alert Service (Should be done I just want confirmation)
+PRIMARY_SERVICE, ORG_BLUETOOTH_SERVICE_IMMEDIATE_ALERT
+CHARACTERISTIC, ORG_BLUETOOTH_CHARACTERISTIC_ALERT_LEVEL,
+DYNAMIC | WRITE | WRITE_AUTHENTICATED | WRITE_ENCRYPTED | WRITE_AUTHORIZED, // basic & security related flags
+CHARACTERISTIC_USER_DESCRIPTION, READ, "Immediate Alert Service" // maybe not necessary to include this
+
+
+// TODO: Alert Notification Service
+PRIMARY_SERVICE, ORG_BLUETOOTH_SERVICE_ALERT_NOTIFICATION
+
+
 // TODO: Add the required characteristics, user descriptions, and security flags.
-
-
