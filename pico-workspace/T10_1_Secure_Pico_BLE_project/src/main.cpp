@@ -98,6 +98,22 @@ static SecurityEventHandler g_security_event_handler;
  */
 static c7222::OnBoardLED* g_onboard_led = nullptr;
 
+/**
+ * @brief Global pointer to the on-board Button.
+ */
+static c7222::Button* g_button = nullptr;
+
+/**
+ * @brief Global pointer to board.
+ */
+c7222::PicoWBoard* g_board = nullptr;
+
+/**
+ * @brief Global pointer to platform.
+ */
+c7222::Platform* g_platform = nullptr;
+
+
 
 /**
  * @brief Configure GAP advertising for the project device.
@@ -129,12 +145,8 @@ void ConfigureAdvertisement() {
     ble->SetDeviceName(kDeviceName);
 	
 	// 4. Set advertising parameters.
+    gap->SetAdvertisingParameters(c7222::Gap::AdvertisementParameters());
 	// 5. Start advertising.
-	c7222::Gap::AdvertisementParameters params;
-    //params.advertising_type = c7222::Gap::AdvertisingType::kAdvInd;
-	//params.min_interval = 320;
-    //params.max_interval = 400;
-    gap->SetAdvertisingParameters(params);
     gap->StartAdvertising();
 
     std::cout << "Advertising'" << kDeviceName << "'\n";
@@ -188,10 +200,25 @@ void ConfigureSecurityManager(c7222::Ble* ble) {
  * @return Struct containing the resolved IAS and ANS service pointers.
  */
 ProjectGattObjects ResolveGattObjects() {
-	// TODO: resolve the required GATT objects.
+	if (!g_att_server) {
+		printf("!g_att_server");
+		return ProjectGattObjects{};
+	}
+
+	auto* ias = g_att_server->FindServiceByUuid(c7222::Uuid(1)); // TODO: set to relevant UUID
+	if (!ias) {
+		printf("!ans");
+		return ProjectGattObjects{};
+	}
+
+	auto* ans = g_att_server->FindServiceByUuid(c7222::Uuid(1)); // TODO: set to relevant UUID
+	if (!ans) {
+		printf("!ans");
+		return ProjectGattObjects{};
+	}
+
 	
-	return ProjectGattObjects{};
-	
+	return ProjectGattObjects{ias, ans};
 }
 
 /**
@@ -207,7 +234,33 @@ ProjectGattObjects ResolveGattObjects() {
  * handling.
  */
 void ConfigureBoardOutputs() {
-	// TODO: configure board I/O.
+	g_board = g_platform->GetPicoWBoard();
+	if (!g_board) {
+		printf("!g_board"); 
+		return;
+	}
+
+	g_button = &g_board->GetButton(c7222::PicoWBoard::ButtonId::BUTTON_B1);
+	if (!g_button) {
+		printf("!g_button"); 
+		return;
+	}
+
+	g_onboard_led = c7222::OnBoardLED::GetInstance(); // good for debugging, but we also need PWM for the actual project
+	if (!g_onboard_led->Initialize()) {
+		printf("!g_onboard_led->Initialize()"); 
+		return;
+	}
+
+	g_alert_pwm = g_platform->CreateLedPwm(c7222::PicoWBoard::LedId::LED1_GREEN, 0); // default to off (0-255; min-max)
+	if (!g_alert_pwm) {
+		printf("!g_alert_pwm"); 
+		return;
+	}
+
+	g_button->EnableIrq(c7222::GpioInputEvent::BothEdges,
+		[](uint32_t) {g_event_group.SetBitsFromISR(kButtonPressedEventMask);} // TODO: lambda expression to handle button presses as interrupts, but idk if this works; therefore TODO.
+	);
 	
 }
 
@@ -223,10 +276,12 @@ void ConfigureBoardOutputs() {
  * @param alert_notification_service Application object that applies ANS logic.
  */
 void HandleButtonPress(bool connected, AlertNotificationService& alert_notification_service) {
-	// TODO: update the alert state on button press.
+	if (!connected) {return;} // return if not connected since unconnected presses shouldn't increment
 	
-	(void)connected;
 	(void)alert_notification_service;
+
+	// TODO: update the alert state on button press.
+	// TODO: Increment counter on button press
 	
 }
 
@@ -296,9 +351,6 @@ void OnBleStackOn() {
 	ble->SetOnBleStackOnCallback(OnBleStackOn); // 8_4 & 8_5 call ConfigureAdvertising directly. Not sure what benefit there is to using OnBleStackOn to just call ConfigureAdvertising
 	ble->TurnOn();
 
-	
-	(void)g_att_server;
-
 	auto* gap = ble->GetGap();
 
 	// Inside the loop, the task has three responsibilities:
@@ -315,7 +367,15 @@ void OnBleStackOn() {
             g_onboard_led->Off();
         }
 
-		//HandleButtonPress(g_att_server->IsConnected(), alert notification service gets passed here); // TODO: handle button presses & set up ANS object
+		uint32_t button_event = g_event_group.WaitBits(kButtonPressedEventMask, // bits_to_wait_for – Target bits.
+									true, // If true, clear requested bits before return.
+									false, // I don't think this matters, but I set it to false in case that has better responsiveness. If true, wait for all bits; otherwise any bit.
+									100); // TODO: I think this is correct, but want confirmation it works so I left a TODO. -  ticks_to_wait – Max ticks to wait. 
+
+
+		if (button_event & kButtonPressedEventMask) {
+			HandleButtonPress(g_att_server->IsConnected(), ANS gets passed here); // TODO: handle button presses & set up ANS object
+		}
 
 		c7222::FreeRtosTask::Delay(c7222::FreeRtosTask::MsToTicks(250));
 	}
@@ -341,9 +401,9 @@ void OnBleStackOn() {
 [[noreturn]] int main() {
 	// initialize the system and start the BLE task.
 
-	auto* platform = c7222::Platform::GetInstance();
+	g_platform = c7222::Platform::GetInstance();
 
-	if (!platform->Initialize()) {
+	if (!g_platform->Initialize()) {
         printf("Failed to initialize platform");
 		return -1;
     }
