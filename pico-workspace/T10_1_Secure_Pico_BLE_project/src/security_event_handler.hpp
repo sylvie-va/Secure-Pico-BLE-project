@@ -70,9 +70,63 @@ class SecurityEventHandler final : public c7222::SecurityManager::EventHandler {
 		security_manager_ = security_manager;
 	}
 
-	// TODO: declare the Security Manager callbacks required by the project
-	// pairing and authorization flow.
-	
+	/**
+	 * @brief Called when "Just Works" confirmation is requested.
+	 * @param connection_handle Connection on which pairing is requested.
+	 */
+	void OnJustWorksRequest(c7222::ConnectionHandle connection_handle) const override;
+
+	/**
+	 * @brief Called when numeric comparison is requested.
+	 * @param connection_handle Connection associated with the request.
+	 * @param numeric_value 6-digit numeric comparison value to confirm.
+	 */
+	void OnNumericComparisonRequest(c7222::ConnectionHandle connection_handle, uint32_t numeric_value) const override;
+
+	/**
+	 * @brief Called when the stack requests passkey display.
+	 * @param connection_handle Connection on which passkey display is required.
+	 * @param passkey Passkey value that should be shown to the user.
+	 */
+	void OnPasskeyDisplay(c7222::ConnectionHandle connection_handle, uint32_t passkey) const override;
+
+	/**
+	 * @brief Called when the stack requests passkey input.
+	 * @param connection_handle Connection on which passkey entry is required.
+	 */
+	void OnPasskeyInput(c7222::ConnectionHandle connection_handle) const override;
+
+	/**
+	 * @brief Called when pairing completes.
+	 *
+	 * @param connection_handle Connection for which pairing completed.
+	 * @param status High-level pairing status.
+	 * @param status_code Stack-specific status value.
+	 */
+	void OnPairingComplete(c7222::ConnectionHandle connection_handle, 
+	                       c7222::SecurityManager::PairingStatus status,
+	                       uint8_t status_code) const override;
+
+	/**
+	 * @brief Called when re-encryption completes.
+	 * @param connection_handle Connection for which re-encryption completed.
+	 * @param status_code Stack-specific re-encryption status code.
+	 */
+	void OnReencryptionComplete(c7222::ConnectionHandle connection_handle, uint8_t status_code) const override;
+
+	/**
+	 * @brief Called when authorization is required.
+	 * @param connection_handle Connection requesting authorization.
+	 */
+	void OnAuthorizationRequest(c7222::ConnectionHandle connection_handle) const override;
+
+	/**
+	 * @brief Called when an authorization decision is available.
+	 * @param connection_handle Connection associated with the decision.
+	 * @param result Authorization decision for the connection.
+	 */
+	void OnAuthorizationResult(c7222::ConnectionHandle connection_handle,
+	                           c7222::SecurityManager::AuthorizationResult result) const override;
 
    private:
 	/** @brief Enabled SecurityManager used by the callback implementations. */

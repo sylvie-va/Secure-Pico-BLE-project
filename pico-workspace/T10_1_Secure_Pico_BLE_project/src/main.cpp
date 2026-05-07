@@ -341,7 +341,7 @@ void OnBleStackOn() {
  	// 5. configure board I/O,
 	ConfigureBoardOutputs();
  	
-	// * TODO: 6. resolve the project services from the parsed GATT database,
+	// 6. resolve the project services from the parsed GATT database,
  	auto gattObj = ResolveGattObjects();
 	
 	// * TODO: 7. construct the application-side service objects,
@@ -354,8 +354,8 @@ void OnBleStackOn() {
 	auto* gap = ble->GetGap();
 
 	// Inside the loop, the task has three responsibilities:
- 	// TODO: - observe connection-state transitions and notify the application objects,
- 	// TODO: - process button events delivered through the event group, and
+ 	// observe connection-state transitions and notify the application objects,
+ 	// process button events delivered through the event group, and
  	// - update the status LED while the device is not connected.
 
 	while(true) {
@@ -370,7 +370,7 @@ void OnBleStackOn() {
 		uint32_t button_event = g_event_group.WaitBits(kButtonPressedEventMask, // bits_to_wait_for – Target bits.
 									true, // If true, clear requested bits before return.
 									false, // I don't think this matters, but I set it to false in case that has better responsiveness. If true, wait for all bits; otherwise any bit.
-									100); // TODO: I think this is correct, but want confirmation it works so I left a TODO. -  ticks_to_wait – Max ticks to wait. 
+									100); // I think this is correct. -  ticks_to_wait – Max ticks to wait. 
 
 
 		if (button_event & kButtonPressedEventMask) {
