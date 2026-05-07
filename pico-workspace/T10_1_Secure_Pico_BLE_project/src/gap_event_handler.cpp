@@ -24,12 +24,26 @@
 
 #include "platform.hpp"
 
-GapEventHandler::GapEventHandler(c7222::Gap* gap, c7222::AttributeServer* attribute_server)
-	: gap_(gap), attribute_server_(attribute_server) {}
+GapEventHandler::GapEventHandler(c7222::Gap* gap,
+	c7222::AttributeServer* attribute_server,
+	AlertNotificationService* ans,
+	ImmediateAlertService* ias)
+	: gap_(gap),
+	attribute_server_(attribute_server),
+	ans_(ans),
+	ias_(ias) {}
 
 void GapEventHandler::SetAttributeServer(c7222::AttributeServer* attribute_server) {
 	// store the AttributeServer pointer for later connection handling.
 	attribute_server_ = attribute_server;
+}
+
+void GapEventHandler::SetImmediateAlertService(ImmediateAlertService* ias) {
+	ias_ = ias;
+}
+
+void GapEventHandler::SetAlertNotificationService(AlertNotificationService* ans) {
+	ans_ = ans;
 }
 
 void GapEventHandler::OnConnectionComplete(uint8_t status,
@@ -40,7 +54,7 @@ void GapEventHandler::OnConnectionComplete(uint8_t status,
 										   uint16_t supervision_timeout) const {
 	(void)address;
 	std::printf(
-		"GAP event: ConnectionComplete (status=0x%02X, handle=%u, interval=%u, latency=%u, timeout=%u)\n",
+		"GapEventHandler::OnConnectionComplete: status=0x%02X, handle=%u, interval=%u, latency=%u, timeout=%u\n",
 		status,
 		con_handle,
 		conn_interval,
@@ -49,6 +63,8 @@ void GapEventHandler::OnConnectionComplete(uint8_t status,
 
 	// if an AttributeServer exists, propagate the active connection handle
 	// to it so GATT operations can use the current connection.
+
+	// TODO: connection-specific alert state starts from a clean state.
 	
 	if (status == 0 && attribute_server_ != nullptr) {
 		attribute_server_ -> SetConnectionHandle(con_handle);
@@ -62,7 +78,7 @@ void GapEventHandler::OnConnectionComplete(uint8_t status,
 void GapEventHandler::OnDisconnectionComplete(uint8_t status,
 											  c7222::ConnectionHandle con_handle,
 											  uint8_t reason) const {
-	std::printf("GAP event: DisconnectionComplete (status=0x%02X, handle=%u, reason=0x%02X)\n",
+	std::printf("GapEventHandler::OnDisconnectionComplete: status=0x%02X, handle=%u, reason=0x%02X\n",
 				status,
 				con_handle,
 				reason); // not used in project, but good for logging
@@ -70,11 +86,13 @@ void GapEventHandler::OnDisconnectionComplete(uint8_t status,
 	// restart advertising through GAP so the device becomes discoverable again.
 	connected_ = false;
 	
-	if (attribute_server_ != nullptr) {
+	if (attribute_server_) {
 		attribute_server_->SetDisconnected();
 	}
 
-	if (gap_ != nullptr) {
+	ias_->reset(); // call IAS reset upon disconnects to prevent the LED staying on post-disconnect.
+
+	if (gap_) {
         gap_ -> StartAdvertising();
         std::printf("Advertising restart\n"); // not used in project, but good for logging
     }

@@ -51,6 +51,21 @@ enum class AlertLevel : uint8_t {
  * object-oriented decomposition is an example, not a required project
  * architecture.
  */
-class ImmediateAlertService;
+class ImmediateAlertService {
+	public:
+		/** @brief IAS Builder. */
+		explicit ImmediateAlertService(c7222::Service* service);
 
+		/** @brief reset alert level to NoAlert when called */
+		void reset();
 
+	private:
+		// set IAS alert level
+		void set_alert_level(module10_ias_spec::AlertLevel level);
+
+		// IAS alert level
+		c7222::Characteristic* alert_level_;
+
+		// current IAS alert level
+		module10_ias_spec::AlertLevel current_level_ = module10_ias_spec::AlertLevel::kNoAlert;
+};

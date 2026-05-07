@@ -12,6 +12,8 @@
 
 #include "attribute_server.hpp"
 #include "gap.hpp"
+#include "alert_notification_service.hpp"
+#include "immediate_alert_service.hpp"
 
 /**
  * @brief Example bridge between asynchronous GAP callbacks and the project
@@ -50,7 +52,9 @@ class GapEventHandler : public c7222::Gap::EventHandler {
 	 * connection handle after the GATT database has been enabled.
 	 */
 	explicit GapEventHandler(c7222::Gap* gap = c7222::Gap::GetInstance(),
-							 c7222::AttributeServer* attribute_server = nullptr);
+								c7222::AttributeServer* attribute_server = nullptr,
+								AlertNotificationService* ans = nullptr,
+								ImmediateAlertService* ias = nullptr);
 
 	/**
 	 * @brief Store the AttributeServer used for connection tracking.
@@ -62,6 +66,20 @@ class GapEventHandler : public c7222::Gap::EventHandler {
 	 * @param attribute_server AttributeServer associated with the BLE server.
 	 */
 	void SetAttributeServer(c7222::AttributeServer* attribute_server);
+
+	/**
+	 * @brief Store the ImmediateAlertService used for controlling the PWM LED and Alert level.
+	 *
+	 * @param ias ImmediateAlertService service.
+	 */
+	void SetImmediateAlertService(ImmediateAlertService* ias);
+
+	/**
+	 * @brief Store the AlertNotificationService used for storing alert notifications and read/unread functionality.
+	 *
+	 * @param ias AlertNotificationService service.
+	 */
+	void SetAlertNotificationService(AlertNotificationService* ans);
 
 	/**
 	 * @brief Query whether the server currently has an active connection.
@@ -105,4 +123,9 @@ class GapEventHandler : public c7222::Gap::EventHandler {
 	c7222::AttributeServer* attribute_server_ = nullptr;
 	/** @brief Cached connection flag updated by GAP callbacks. */
 	mutable bool connected_ = false;
+	
+	/** @brief IAS pointer */
+	ImmediateAlertService* ias_ = nullptr;
+	/** @brief ANS pointer */
+	AlertNotificationService* ans_ = nullptr;
 };

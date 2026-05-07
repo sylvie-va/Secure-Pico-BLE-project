@@ -205,13 +205,13 @@ ProjectGattObjects ResolveGattObjects() {
 		return ProjectGattObjects{};
 	}
 
-	auto* ias = g_att_server->FindServiceByUuid(c7222::Uuid(1)); // TODO: set to relevant UUID
+	auto* ias = g_att_server->FindServiceByUuid(c7222::Uuid(module10_ias_spec::kServiceUuid));
 	if (!ias) {
 		printf("!ans");
 		return ProjectGattObjects{};
 	}
 
-	auto* ans = g_att_server->FindServiceByUuid(c7222::Uuid(1)); // TODO: set to relevant UUID
+	auto* ans = g_att_server->FindServiceByUuid(c7222::Uuid(module10_ans_spec::kServiceUuid)); 
 	if (!ans) {
 		printf("!ans");
 		return ProjectGattObjects{};
@@ -344,7 +344,13 @@ void OnBleStackOn() {
 	// 6. resolve the project services from the parsed GATT database,
  	auto gattObj = ResolveGattObjects();
 	
-	// * TODO: 7. construct the application-side service objects,
+	// 7. construct the application-side service objects,
+	ImmediateAlertService ias(gattObj.immediate_alert_service); // construct IAS
+	// TODO: construct ANS
+
+	// attach IAS & ANS to g_gap_event_handler
+	g_gap_event_handler.SetImmediateAlertService(&ias);
+	//g_gap_event_handler.SetAlertNotificationService(&ans); // TODO: attach service to the gap event handler
 
 
  	// * 8. turn on the BLE stack
