@@ -328,7 +328,7 @@ void OnBleStackOn() {
 	ConfigureSecurityManager(ble); // CSM  enables the security
 
 	// 3. enable the Attribute Server with the compiled profile
-	ble->EnableAttributeServer(profile_data);
+	g_att_server = ble->EnableAttributeServer(profile_data);
 
 	// 4. connect the GAP handler to the Attribute Server,
 	g_gap_event_handler.SetAttributeServer(g_att_server);
