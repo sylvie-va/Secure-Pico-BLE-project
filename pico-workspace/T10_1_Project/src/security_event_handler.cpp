@@ -85,7 +85,7 @@ void SecurityEventHandler::OnPairingComplete(c7222::ConnectionHandle connection_
 
 void SecurityEventHandler::OnReencryptionComplete(c7222::ConnectionHandle connection_handle, uint8_t status_code) const {
     std::string status_string = (status_code==0) ? "Success" : "Fail"; // convert into human readable text
-	std::printf("[Security] OnReencryptionComplete: handle=0x%04x status=%s\n", connection_handle, status_string);
+	std::printf("[Security] OnReencryptionComplete: handle=0x%04x status=%s\n", connection_handle, status_string.c_str());
 }
 
 void SecurityEventHandler::OnAuthorizationRequest(c7222::ConnectionHandle connection_handle) const {
@@ -96,5 +96,5 @@ void SecurityEventHandler::OnAuthorizationRequest(c7222::ConnectionHandle connec
 
 void SecurityEventHandler::OnAuthorizationResult(c7222::ConnectionHandle connection_handle, c7222::SecurityManager::AuthorizationResult result) const {
     std::string result_string = (result == c7222::SecurityManager::AuthorizationResult::kGranted) ? "Granted" : "Denied"; // convert into human readable text
-	std::printf("[Security] OnAuthorizationResult: handle=0x%04x, result=%s\n", connection_handle, result_string);
+	std::printf("[Security] OnAuthorizationResult: handle=0x%04x, result=%s\n", connection_handle, result_string.c_str());
 }
