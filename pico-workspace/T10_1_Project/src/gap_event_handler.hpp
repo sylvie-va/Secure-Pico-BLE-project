@@ -53,8 +53,8 @@ class GapEventHandler : public c7222::Gap::EventHandler {
 	 */
 	explicit GapEventHandler(c7222::Gap* gap = c7222::Gap::GetInstance(),
 								c7222::AttributeServer* attribute_server = nullptr,
-								AlertNotificationService* ans = nullptr,
-								ImmediateAlertService* ias = nullptr);
+								ImmediateAlertService* ias = nullptr,
+								AlertNotificationService* ans = nullptr);
 
 	/**
 	 * @brief Store the AttributeServer used for connection tracking.
@@ -77,7 +77,7 @@ class GapEventHandler : public c7222::Gap::EventHandler {
 	/**
 	 * @brief Store the AlertNotificationService used for storing alert notifications and read/unread functionality.
 	 *
-	 * @param ias AlertNotificationService service.
+	 * @param ans AlertNotificationService service.
 	 */
 	void SetAlertNotificationService(AlertNotificationService* ans);
 

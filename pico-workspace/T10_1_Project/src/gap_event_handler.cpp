@@ -26,12 +26,12 @@
 
 GapEventHandler::GapEventHandler(c7222::Gap* gap,
 	c7222::AttributeServer* attribute_server,
-	AlertNotificationService* ans,
-	ImmediateAlertService* ias)
+	ImmediateAlertService* ias,
+	AlertNotificationService* ans)
 	: gap_(gap),
 	attribute_server_(attribute_server),
-	ans_(ans),
-	ias_(ias) {}
+	ias_(ias),
+	ans_(ans) {}
 
 void GapEventHandler::SetAttributeServer(c7222::AttributeServer* attribute_server) {
 	// store the AttributeServer pointer for later connection handling.
