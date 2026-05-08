@@ -51,21 +51,27 @@ enum class AlertLevel : uint8_t {
  * object-oriented decomposition is an example, not a required project
  * architecture.
  */
-class ImmediateAlertService {
-	public:
-		/** @brief IAS Builder. */
-		explicit ImmediateAlertService(c7222::Service* service);
+class ImmediateAlertService : public c7222::Characteristic::EventHandler {
+   public:
 
-		/** @brief reset alert level to NoAlert when called */
-		void reset();
+    /** this builds the IAS service */
+    explicit ImmediateAlertService(c7222::Service* service, c7222::PwmOut* pwm);
 
-	private:
-		// set IAS alert level
-		void set_alert_level(module10_ias_spec::AlertLevel level);
+    /** this resets the alert level (called when disconnecting) */
+    void reset();
 
-		// IAS alert level
-		c7222::Characteristic alert_level_;
+    void OnWrite(const std::vector<uint8_t>& data) override;
 
-		// current IAS alert level
-		module10_ias_spec::AlertLevel current_level_ = module10_ias_spec::AlertLevel::kNoAlert;
+   private:
+    // set IAS alert level
+    void set_alert_level(module10_ias_spec::AlertLevel level);
+
+    // parsed IAS Alert Level characteristic
+    c7222::Characteristic* alert_level_ = nullptr;
+
+    // PWM output used to visualize alert state
+    c7222::PwmOut* pwm_ = nullptr;
+
+    // current IAS alert level
+    module10_ias_spec::AlertLevel current_level_ = module10_ias_spec::AlertLevel::kNoAlert;
 };

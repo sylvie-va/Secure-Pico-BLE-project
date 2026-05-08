@@ -173,10 +173,10 @@ void ConfigureSecurityManager(c7222::Ble* ble) {
 	
 	parameters.io_capability = c7222::SecurityManager::IoCapability::kDisplayOnly; // I/O must be picked explicitly - DisplayOnly suggested in course's plus.cs.aalto
 
-	parameters.authentication = c7222::SecurityManager::AuthenticationRequirement::kSecureConnections | // TODO: not sure about this? It looked right
+	parameters.authentication = c7222::SecurityManager::AuthenticationRequirement::kSecureConnections | // not sure about this? It looked right
 	                         c7222::SecurityManager::AuthenticationRequirement::kMitmProtection; // require authenticated pairing with MITM protection
 
-	parameters.gatt_client_required_security_level = c7222::SecurityManager::GattClientSecurityLevel::kLevel4; // TODO: not sure about this level
+	parameters.gatt_client_required_security_level = c7222::SecurityManager::GattClientSecurityLevel::kLevel4; // not sure about this level
 
 	c7222::SecurityManager *SecurityManager = ble->EnableSecurityManager(parameters); // I think this works ?
 
@@ -259,7 +259,7 @@ void ConfigureBoardOutputs() {
 	}
 
 	g_button->EnableIrq(c7222::GpioInputEvent::BothEdges,
-		[](uint32_t) {g_event_group.SetBitsFromISR(kButtonPressedEventMask);} // TODO: lambda expression to handle button presses as interrupts, but idk if this works; therefore TODO.
+		[](uint32_t) {g_event_group.SetBitsFromISR(kButtonPressedEventMask);} //
 	);
 	
 }
@@ -342,11 +342,7 @@ void OnBleStackOn() {
 	
 	// 7. construct the application-side service objects,
 	// construct IAS
-	ImmediateAlertService ias(gattObj.immediate_alert_service); // construct IAS
-	//if (!ans.Initialize()) {
-	//	printf("Failed to initialize ANS\n");
-	//	return;
-	//}
+	ImmediateAlertService ias(gattObj.immediate_alert_service, g_alert_pwm.get()); // construct IAS
 	// construct ANS
 	AlertNotificationService ans(*gattObj.alert_notification_service);
 	if (!ans.Initialize()) {

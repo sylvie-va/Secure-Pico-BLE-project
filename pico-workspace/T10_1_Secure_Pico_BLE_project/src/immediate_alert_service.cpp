@@ -35,22 +35,69 @@
 // The example class-based IAS implementation is provided as a reference
 // solution only. Students may implement the project using another structure.
 
-ImmediateAlertService::ImmediateAlertService(c7222::Service* service) : 
-    alert_level_(c7222::Uuid(module10_ias_spec::kAlertLevelUuid), static_cast<uint8_t>(c7222::Characteristic::Properties::kWriteWithoutResponse),0x0002,0x0003){
-        /* 
-        the above should create the service with the characteristic alert_level which has the Uuid of kAlertLevelUuid, 
-        the property of kWriteWithoutResponse as dictated by the IAS HTML at https://www.bluetooth.com/specifications/specs/immediate-alert-service-1-0/,
-        and the ATT handles 2 and 3.
-        */
+ImmediateAlertService::ImmediateAlertService(c7222::Service* service, c7222::PwmOut* pwm) : alert_level_(nullptr), pwm_(pwm){
+    // above the constructor initializes the alert_level_ pointer to nullptr and stores the pwm pointer for later use.
 
-        // this here sets the actual value of alert_level_ to no alert
-        alert_level_.SetValue(module10_ias_spec::AlertLevel::kNoAlert);
-        service->AddCharacteristic(alert_level_);
+    assert(service != nullptr);
+    assert(pwm != nullptr);
 
+    /* that service pointer is expected to point to a valid Service object that contains the Alert Level characteristic parsed from the ATT DB.
+    The constructor should resolve the Alert Level characteristic and store a pointer to it in alert_level_.
+    */
 
+    alert_level_ = service->FindCharacteristicByUuid(c7222::Uuid(module10_ias_spec::kAlertLevelUuid));
+    // now the alert level pointer points to the services alert level characteristic, which is where the client writes will be received.
+
+    assert(alert_level_ != nullptr);
+    // confirms that the alert level characteristic was found in the service.
+
+    alert_level_->AddEventHandler(*this);
+    set_alert_level(module10_ias_spec::AlertLevel::kNoAlert);
+    // binds the class to an even handler and then setst the alert to no alert(aka led off).
+
+}
+
+void ImmediateAlertService::reset(){
+    set_alert_level(module10_ias_spec::AlertLevel::kNoAlert);
+    // used after disconnect to reset alert level.
+}
+
+void ImmediateAlertService::OnWrite(const std::vector<uint8_t>& data){
+    if (data.empty()){
+        return;
+    }
     
+    const uint8_t rawVal = data[0];
+    if (rawVal > static_cast<uint8_t>(module10_ias_spec::AlertLevel::kHighAlert))
+    {
+        return;
+    }
+    // if the value given is larger than high alert it is ignored.
+
+    set_alert_level(static_cast<module10_ias_spec::AlertLevel>(rawVal)); 
+}
+
+void ImmediateAlertService::set_alert_level(module10_ias_spec::AlertLevel level){
+    // checks that the thing wont die to a nullptr
+    if(alert_level_ == nullptr || pwm_ == nullptr){
+        return;
+    }
     
+    // makes sure the level is not the same as the level it would be changed to (to avoid redundant work)
+    if(current_level_ == level) {
+        return;
+    }
 
-
-
+    // good ole switch case!
+    switch (level) {
+        case module10_ias_spec::AlertLevel::kNoAlert:
+            pwm_->SetDutyCycle(0.0f);
+            break;
+        case module10_ias_spec::AlertLevel::kMildAlert:
+            pwm_->SetDutyCycle(0.25f);
+            break;
+        case module10_ias_spec::AlertLevel::kHighAlert:
+            pwm_->SetDutyCycle(0.90f);
+            break;
+    }
 }
