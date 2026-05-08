@@ -346,8 +346,7 @@ void OnBleStackOn() {
 	// construct ANS
 	AlertNotificationService ans(*gattObj.alert_notification_service);
 	if (!ans.Initialize()) {
-		printf("Failed to initialize ANS\n");
-		return;
+		assert("Failed to initialize ANS\n");
 	}
 
 	// attach IAS & ANS to g_gap_event_handler
@@ -412,8 +411,7 @@ void OnBleStackOn() {
 	g_platform = c7222::Platform::GetInstance();
 
 	if (!g_platform->Initialize()) {
-        printf("Failed to initialize platform");
-		return -1;
+        assert("Failed to initialize platform");
     }
 
     std::printf("Platform initialized.\n");
@@ -425,8 +423,7 @@ void OnBleStackOn() {
         c7222::FreeRtosTask::IdlePriority() + 1,
         BleTask,
         nullptr)) {
-			printf("Failed to initialize BLE Task");
-			return -2;
+			assert("Failed to initialize BLE Task");
 		}
 
 	// 6. Start the scheduler.
