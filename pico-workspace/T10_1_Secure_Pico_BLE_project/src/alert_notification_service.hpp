@@ -90,6 +90,71 @@ enum class Command : uint8_t {
  * object-oriented decomposition is an example, not a required project
  * architecture.
  */
-class AlertNotificationService;
+class AlertNotificationService
+    : public c7222::Characteristic::EventHandler {
+
+public:
+    explicit AlertNotificationService(c7222::Service& service);
+
+    bool Initialize();
+
+    void AddNewAlert(module10_ans_spec::Category category,
+                     const std::string& message);
+
+    void SetUnreadCount(module10_ans_spec::Category category,
+                        uint8_t count);
+
+    void ResetClientConfiguration();
+
+    void OnWrite(const std::vector<uint8_t>& data) override;
+
+private:
+    c7222::Service& service_;
+
+    c7222::Characteristic* supported_new_alert_category_ = nullptr;
+    c7222::Characteristic* new_alert_ = nullptr;
+    c7222::Characteristic* supported_unread_alert_category_ = nullptr;
+    c7222::Characteristic* unread_alert_status_ = nullptr;
+    c7222::Characteristic* control_point_ = nullptr;
+
+    uint16_t enabled_new_alert_categories_ = 0;
+    uint16_t enabled_unread_categories_ = 0;
+
+    std::array<uint8_t, module10_ans_spec::kAlertCategoryCount>
+        unread_counts_{};
+
+private:
+    bool ResolveCharacteristics();
+
+    void InitializeSupportedCategories();
+
+    void NotifyNewAlert(module10_ans_spec::Category category,
+                        const std::string& message);
+
+    void NotifyUnreadStatus(module10_ans_spec::Category category);
+
+    void HandleControlPointCommand(const std::vector<uint8_t>& data);
+
+    void EnableCategory(uint16_t& mask,
+                        module10_ans_spec::Category category);
+
+    void DisableCategory(uint16_t& mask,
+                         module10_ans_spec::Category category);
+
+    bool IsCategoryEnabled(uint16_t mask,
+                           module10_ans_spec::Category category) const;
+
+    uint16_t CategoryToMask(module10_ans_spec::Category category) const;
+
+    std::vector<uint8_t> BuildNewAlertPayload(
+        module10_ans_spec::Category category,
+        const std::string& message) const;
+
+    std::vector<uint8_t> BuildUnreadStatusPayload(
+        module10_ans_spec::Category category) const;
+
+    void SendNotification(c7222::Characteristic& characteristic,
+                          const std::vector<uint8_t>& payload);
+};
 
 

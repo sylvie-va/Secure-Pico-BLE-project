@@ -34,7 +34,175 @@
 #include <cassert>
 #include <cstdio>
 
-// The example class-based ANS implementation is provided as a reference
-// solution only. Students may implement the project using another structure.
+using namespace module10_ans_spec;
 
+AlertNotificationService::AlertNotificationService(
+    c7222::Service& service)
+    : service_(service) {
+}
 
+bool AlertNotificationService::Initialize(){ 
+    if (!ResolveCharacteristics()){
+        return false;
+    }
+    InitializeSupportedCategories();
+    unread_counts_.fill(0);
+    enabled_new_alert_categories_ = 0;
+    enabled_unread_categories_ = 0;
+    if (control_point_){
+        control_point_->AddEventHandler(*this);
+    }
+
+    return true;
+}
+
+bool AlertNotificationService::ResolveCharacteristics() {
+    supported_new_alert_category_ =
+        service_.FindCharacteristicByUuid(
+            c7222::Uuid(kSupportedNewAlertCategoryUuid));
+    new_alert_ =
+        service_.FindCharacteristicByUuid(
+            c7222::Uuid(kNewAlertUuid));
+    supported_unread_alert_category_ =
+        service_.FindCharacteristicByUuid(
+            c7222::Uuid(kSupportedUnreadAlertCategoryUuid));
+
+    unread_alert_status_ =
+        service_.FindCharacteristicByUuid(
+            c7222::Uuid(kUnreadAlertStatusUuid));
+
+    control_point_ =
+        service_.FindCharacteristicByUuid(
+            c7222::Uuid(kAlertNotificationControlPointUuid));
+
+    return supported_new_alert_category_ &&
+           new_alert_ &&
+           supported_unread_alert_category_ &&
+           unread_alert_status_ &&
+           control_point_;
+}
+void AlertNotificationService::InitializeSupportedCategories() {
+    uint16_t mask = kAllAlertMask;
+
+    std::vector<uint8_t> value = {
+        static_cast<uint8_t>(mask & 0xFF),
+        static_cast<uint8_t>(mask >> 8)
+    };
+    supported_new_alert_category_->SetValue(value);
+    supported_unread_alert_category_->SetValue(value);
+}
+void AlertNotificationService::AddNewAlert(
+    Category category,
+    const std::string& message) {
+
+    size_t i = static_cast<size_t>(category);
+    if (i >= unread_counts_.size()){
+        return;
+    }
+
+    if (unread_counts_[i] < 255){
+        unread_counts_[i]++;
+    }
+
+    NotifyNewAlert(category, message);
+    NotifyUnreadStatus(category);
+}
+
+void AlertNotificationService::SetUnreadCount(
+    Category category,
+    uint8_t count) {
+
+    size_t i = static_cast<size_t>(category);
+    if (i >= unread_counts_.size()){
+        return;
+    }
+    unread_counts_[i] = count;
+}
+
+void AlertNotificationService::OnWrite(
+    const std::vector<uint8_t>& data) {
+    HandleControlPointCommand(data);
+}
+
+void AlertNotificationService::HandleControlPointCommand(
+    const std::vector<uint8_t>& data){
+    if (data.size() < 2){
+        return;
+    }
+    Command cmd = static_cast<Command>(data[0]);
+    Category cat = static_cast<Category>(data[1]);
+
+    if (static_cast<size_t>(cat) >= module10_ans_spec::kAlertCategoryCount &&
+        cat != Category::kAllAlerts) {
+        return;
+    }
+    uint16_t bit = CategoryToMask(cat);
+    switch (cmd) {
+        case Command::kEnableNewIncomingAlertNotification:
+            enabled_new_alert_categories_ |= bit;
+            break;
+
+        case Command::kDisableNewIncomingAlertNotification:
+            enabled_new_alert_categories_ &= ~bit;
+            break;
+
+        case Command::kEnableUnreadCategoryStatusNotification:
+            enabled_unread_categories_ |= bit;
+            break;
+
+        case Command::kDisableUnreadCategoryStatusNotification:
+            enabled_unread_categories_ &= ~bit;
+            break;
+
+        case Command::kNotifyNewIncomingAlertImmediately:
+            NotifyNewAlert(cat, "");
+            break;
+
+        case Command::kNotifyUnreadCategoryStatusImmediately:
+            NotifyUnreadStatus(cat);
+            break;
+
+        default:
+            break;
+    }
+}
+
+uint16_t AlertNotificationService::CategoryToMask(
+    Category category) const {
+
+    if (category == Category::kAllAlerts) return kAllAlertMask;
+    return 1u << static_cast<uint8_t>(category);
+}
+
+std::vector<uint8_t>
+AlertNotificationService::BuildNewAlertPayload(
+    Category category,
+    const std::string& message) const {
+
+    size_t i = static_cast<size_t>(category);
+
+    std::vector<uint8_t> p;
+    p.push_back(static_cast<uint8_t>(category));
+    p.push_back(unread_counts_[i]);
+    p.insert(p.end(), message.begin(), message.end());
+
+    return p;
+}
+
+std::vector<uint8_t>
+AlertNotificationService::BuildUnreadStatusPayload(
+    Category category) const {
+
+    size_t i = static_cast<size_t>(category);
+
+    return {
+        static_cast<uint8_t>(category),
+        unread_counts_[i]
+    };
+}
+void AlertNotificationService::SendNotification(
+    c7222::Characteristic& ch,
+    const std::vector<uint8_t>& payload) {
+
+    ch.SetValue(payload);
+}

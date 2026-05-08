@@ -64,7 +64,7 @@ class ImmediateAlertService {
 		void set_alert_level(module10_ias_spec::AlertLevel level);
 
 		// IAS alert level
-		c7222::Characteristic* alert_level_;
+		c7222::Characteristic alert_level_;
 
 		// current IAS alert level
 		module10_ias_spec::AlertLevel current_level_ = module10_ias_spec::AlertLevel::kNoAlert;

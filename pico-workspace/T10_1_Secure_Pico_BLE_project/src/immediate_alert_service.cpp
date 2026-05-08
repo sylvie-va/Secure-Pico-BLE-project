@@ -35,4 +35,22 @@
 // The example class-based IAS implementation is provided as a reference
 // solution only. Students may implement the project using another structure.
 
+ImmediateAlertService::ImmediateAlertService(c7222::Service* service) : 
+    alert_level_(c7222::Uuid(module10_ias_spec::kAlertLevelUuid), static_cast<uint8_t>(c7222::Characteristic::Properties::kWriteWithoutResponse),0x0002,0x0003){
+        /* 
+        the above should create the service with the characteristic alert_level which has the Uuid of kAlertLevelUuid, 
+        the property of kWriteWithoutResponse as dictated by the IAS HTML at https://www.bluetooth.com/specifications/specs/immediate-alert-service-1-0/,
+        and the ATT handles 2 and 3.
+        */
 
+        // this here sets the actual value of alert_level_ to no alert
+        alert_level_.SetValue(module10_ias_spec::AlertLevel::kNoAlert);
+        service->AddCharacteristic(alert_level_);
+
+
+    
+    
+
+
+
+}
