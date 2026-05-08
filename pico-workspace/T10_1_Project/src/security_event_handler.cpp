@@ -80,7 +80,7 @@ void SecurityEventHandler::OnPairingComplete(c7222::ConnectionHandle connection_
 		break;
 	}
 
-	std::printf("[Security] OnPairingComplete: handle=0x%04x, status=%s, code=0x%02x\n", connection_handle, status_string, status_code);
+	std::printf("[Security] OnPairingComplete: handle=0x%04x, status=%s, code=0x%02x\n", connection_handle, status_string.c_str(), status_code);
 }
 
 void SecurityEventHandler::OnReencryptionComplete(c7222::ConnectionHandle connection_handle, uint8_t status_code) const {
