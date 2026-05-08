@@ -64,7 +64,10 @@ void GapEventHandler::OnConnectionComplete(uint8_t status,
 	// if an AttributeServer exists, propagate the active connection handle
 	// to it so GATT operations can use the current connection.
 
-	// TODO: connection-specific alert state starts from a clean state.
+	// connection-specific alert state starts from a clean state.
+	if (ans_) {
+		ans_->ResetClientConfiguration();
+	}
 	
 	if (status == 0 && attribute_server_ != nullptr) {
 		attribute_server_ -> SetConnectionHandle(con_handle);
@@ -90,7 +93,9 @@ void GapEventHandler::OnDisconnectionComplete(uint8_t status,
 		attribute_server_->SetDisconnected();
 	}
 
-	ias_->reset(); // call IAS reset upon disconnects to prevent the LED staying on post-disconnect.
+	if (ias_) {
+		ias_->reset(); // call IAS reset upon disconnects to prevent the LED staying on post-disconnect.
+	}
 
 	if (gap_) {
         gap_ -> StartAdvertising();

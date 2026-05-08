@@ -278,11 +278,7 @@ void ConfigureBoardOutputs() {
 void HandleButtonPress(bool connected, AlertNotificationService& alert_notification_service) {
 	if (!connected) {return;} // return if not connected since unconnected presses shouldn't increment
 	
-	(void)alert_notification_service;
-
-	// TODO: update the alert state on button press.
-	// TODO: Increment counter on button press
-	
+	alert_notification_service.AddNewAlert(module10_ans_spec::Category::kSimpleAlert, ""); // add alert when HandleButtonPress is called
 }
 
 /**
@@ -345,12 +341,22 @@ void OnBleStackOn() {
  	auto gattObj = ResolveGattObjects();
 	
 	// 7. construct the application-side service objects,
+	// construct IAS
 	ImmediateAlertService ias(gattObj.immediate_alert_service); // construct IAS
-	// TODO: construct ANS
+	//if (!ans.Initialize()) {
+	//	printf("Failed to initialize ANS\n");
+	//	return;
+	//}
+	// construct ANS
+	AlertNotificationService ans(*gattObj.alert_notification_service);
+	if (!ans.Initialize()) {
+		printf("Failed to initialize ANS\n");
+		return;
+	}
 
 	// attach IAS & ANS to g_gap_event_handler
 	g_gap_event_handler.SetImmediateAlertService(&ias);
-	//g_gap_event_handler.SetAlertNotificationService(&ans); // TODO: attach service to the gap event handler
+	g_gap_event_handler.SetAlertNotificationService(&ans);
 
 
  	// * 8. turn on the BLE stack
@@ -380,7 +386,7 @@ void OnBleStackOn() {
 
 
 		if (button_event & kButtonPressedEventMask) {
-			HandleButtonPress(g_att_server->IsConnected(), ANS gets passed here); // TODO: handle button presses & set up ANS object
+			HandleButtonPress(g_att_server->IsConnected(), ans);
 		}
 
 		c7222::FreeRtosTask::Delay(c7222::FreeRtosTask::MsToTicks(250));

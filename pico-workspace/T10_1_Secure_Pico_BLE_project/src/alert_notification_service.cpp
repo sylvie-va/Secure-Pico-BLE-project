@@ -206,3 +206,39 @@ void AlertNotificationService::SendNotification(
 
     ch.SetValue(payload);
 }
+
+void AlertNotificationService::ResetClientConfiguration() {
+    enabled_new_alert_categories_ = 0;
+    enabled_unread_categories_ = 0;
+    unread_counts_.fill(0);
+}
+
+void AlertNotificationService::NotifyNewAlert(module10_ans_spec::Category category, const std::string& message) {
+    if (IsCategoryEnabled(enabled_new_alert_categories_, category) && new_alert_->IsNotificationsEnabled()) {
+        auto payload = BuildNewAlertPayload(category, message);
+        SendNotification(*new_alert_, payload);
+    }
+}
+
+void AlertNotificationService::NotifyUnreadStatus(module10_ans_spec::Category category) {
+    if (IsCategoryEnabled(enabled_unread_categories_, category) &&
+        unread_alert_status_->IsNotificationsEnabled()) {
+        auto payload = BuildUnreadStatusPayload(category);
+        SendNotification(*unread_alert_status_, payload);
+    }
+}
+
+void AlertNotificationService::EnableCategory(uint16_t& mask,
+                                             module10_ans_spec::Category category) {
+    mask |= CategoryToMask(category); // enable bits
+}
+
+void AlertNotificationService::DisableCategory(uint16_t& mask,
+                                              module10_ans_spec::Category category) {
+    mask &= ~CategoryToMask(category); // disable bits
+}
+
+bool AlertNotificationService::IsCategoryEnabled(uint16_t mask,
+                                                module10_ans_spec::Category category) const {
+    return (mask & CategoryToMask(category)); // check if bits enabled
+}
