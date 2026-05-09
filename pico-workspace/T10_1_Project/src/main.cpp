@@ -143,6 +143,8 @@ void ConfigureAdvertisement() {
         c7222::AdvertisementData::Flags::kBrEdrNotSupported
 	);
     ble->SetDeviceName(kDeviceName);
+
+	gap->SetAdvertisingData();
 	
 	// 4. Set advertising parameters.
     gap->SetAdvertisingParameters(c7222::Gap::AdvertisementParameters());
