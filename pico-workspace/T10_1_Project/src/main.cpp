@@ -387,6 +387,7 @@ void OnBleStackOn() {
 		if (button_event & kButtonPressedEventMask) {
 			std::printf("button pressed\n");
 			HandleButtonPress(g_att_server->IsConnected(), ans);
+			c7222::FreeRtosTask::Delay(c7222::FreeRtosTask::MsToTicks(500)); // debounce timer. This is a bodge. Not a real fix for multi-click issues.
 		}
 
 		c7222::FreeRtosTask::Delay(c7222::FreeRtosTask::MsToTicks(250));
