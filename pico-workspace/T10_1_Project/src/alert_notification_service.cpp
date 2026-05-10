@@ -97,11 +97,13 @@ void AlertNotificationService::AddNewAlert(
 
     size_t i = static_cast<size_t>(category);
     if (i >= unread_counts_.size()){
+        std::printf("unread counts full\n");
         return;
     }
 
     if (unread_counts_[i] < 255){
         unread_counts_[i]++;
+        std::printf("unread count incremented to: %d\n", unread_counts_[i]);
     }
 
     NotifyNewAlert(category, message);
@@ -117,6 +119,7 @@ void AlertNotificationService::SetUnreadCount(
         return;
     }
     unread_counts_[i] = count;
+    std::printf("unread count set to: %d\n", unread_counts_[i]);
 }
 
 void AlertNotificationService::OnWrite(

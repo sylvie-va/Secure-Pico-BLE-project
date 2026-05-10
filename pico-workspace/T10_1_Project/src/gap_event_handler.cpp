@@ -59,14 +59,19 @@ void GapEventHandler::OnConnectionComplete(uint8_t status,
 		con_handle,
 		conn_interval,
 		conn_latency,
-		supervision_timeout); // not used in project, but good for logging
+		supervision_timeout); // not mandatory in project, but good for logging
 
 	// if an AttributeServer exists, propagate the active connection handle
 	// to it so GATT operations can use the current connection.
 
 	// connection-specific alert state starts from a clean state.
+	// resets are also handled upon disconnect, but just in case some error occurs we keep them here too.
 	if (ans_) {
 		ans_->ResetClientConfiguration();
+	}
+
+	if (ias_) {
+		ias_->reset();
 	}
 	
 	if (status == 0 && attribute_server_ != nullptr) {
@@ -94,7 +99,11 @@ void GapEventHandler::OnDisconnectionComplete(uint8_t status,
 	}
 
 	if (ias_) {
-		ias_->reset(); // call IAS reset upon disconnects to prevent the LED staying on post-disconnect.
+		ias_->reset(); // reset IAS LED upon disconnect, to prevent the LED staying on.
+	}
+
+	if (ias_) {
+		ans_->ResetClientConfiguration(); // reset ANS counter upon disconnect.
 	}
 
 	if (gap_) {

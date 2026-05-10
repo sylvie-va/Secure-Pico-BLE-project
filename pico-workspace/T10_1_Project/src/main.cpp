@@ -96,7 +96,7 @@ static SecurityEventHandler g_security_event_handler;
 /**
  * @brief Global pointer to the on-board LED controller.
  */
-static c7222::OnBoardLED* g_onboard_led = nullptr;
+static c7222::Led* g_connection_led = nullptr;
 
 /**
  * @brief Global pointer to the on-board Button.
@@ -151,7 +151,7 @@ void ConfigureAdvertisement() {
 	// 5. Start advertising.
     gap->StartAdvertising();
 
-    std::cout << "Advertising'" << kDeviceName << "'\n";
+    std::cout << "Advertising: '" << kDeviceName << "'\n";
 }
 
 /**
@@ -173,12 +173,14 @@ void ConfigureAdvertisement() {
 void ConfigureSecurityManager(c7222::Ble* ble) {
 	c7222::SecurityManager::SecurityParameters parameters;
 	
-	parameters.io_capability = c7222::SecurityManager::IoCapability::kDisplayOnly; // I/O must be picked explicitly - DisplayOnly suggested in course's plus.cs.aalto
+	parameters.io_capability = c7222::SecurityManager::IoCapability::kDisplayYesNo; // chosen because kDisplay wouldn't give out the bonding code and it doesn't call the fixed code, instead a randomized one
 
-	parameters.authentication = c7222::SecurityManager::AuthenticationRequirement::kSecureConnections | // not sure about this? It looked right
-	                         c7222::SecurityManager::AuthenticationRequirement::kMitmProtection; // require authenticated pairing with MITM protection
+	parameters.authentication = 
+								c7222::SecurityManager::AuthenticationRequirement::kSecureConnections | // require LE Secure Connections
+	                          	c7222::SecurityManager::AuthenticationRequirement::kMitmProtection; // require authenticated pairing with MITM protection
 
-	parameters.gatt_client_required_security_level = c7222::SecurityManager::GattClientSecurityLevel::kLevel4; // not sure about this level
+	parameters.gatt_client_required_security_level = c7222::SecurityManager::GattClientSecurityLevel::kLevel2; // authorization does not work, so we cannot go higher than level 2 security
+
 
 	c7222::SecurityManager *SecurityManager = ble->EnableSecurityManager(parameters); // I think this works ?
 
@@ -248,20 +250,20 @@ void ConfigureBoardOutputs() {
 		return;
 	}
 
-	g_onboard_led = c7222::OnBoardLED::GetInstance(); // good for debugging, but we also need PWM for the actual project
-	if (!g_onboard_led->Initialize()) {
-		printf("!g_onboard_led->Initialize()"); 
+	g_connection_led = &g_board->GetLed(c7222::PicoWBoard::LedId::LED1_RED); // Connection LED for visual feedbacking irt advertising and connection state
+	if (!g_connection_led) {
+		printf("!g_connection_led"); 
 		return;
 	}
 
-	g_alert_pwm = g_platform->CreateLedPwm(c7222::PicoWBoard::LedId::LED1_GREEN, 0); // default to off (0-255; min-max)
+	g_alert_pwm = g_platform->CreateLedPwm(c7222::PicoWBoard::LedId::LED2_GREEN, 0); // default to off (0-255; min-max)
 	if (!g_alert_pwm) {
 		printf("!g_alert_pwm"); 
 		return;
 	}
 
-	g_button->EnableIrq(c7222::GpioInputEvent::BothEdges,
-		[](uint32_t) {g_event_group.SetBitsFromISR(kButtonPressedEventMask);} //
+	g_button->EnableIrq(c7222::GpioInputEvent::FallingEdge,
+		[](uint32_t) {g_event_group.SetBitsFromISR(kButtonPressedEventMask);}
 	);
 	
 }
@@ -322,7 +324,7 @@ void OnBleStackOn() {
 	if (ble == nullptr) {
 		std::cout << "ble_app_task nullptr" << std::endl;
 		while (true) {
-			c7222::FreeRtosTask::Delay(c7222::FreeRtosTask::MsToTicks(1000)); // need to wait on certain devices tested, else startup fails
+			c7222::FreeRtosTask::Delay(c7222::FreeRtosTask::MsToTicks(1000));
 		}
 	}
 
@@ -369,20 +371,21 @@ void OnBleStackOn() {
 
 	while(true) {
 		if (gap->IsAdvertisingEnabled()){
-            g_onboard_led->Toggle();
+            g_connection_led->Toggle();
         } else if (g_att_server->IsConnected()) {
-            g_onboard_led->On();
+            g_connection_led->On();
         } else {
-            g_onboard_led->Off();
+            g_connection_led->Off();
         }
 
 		uint32_t button_event = g_event_group.WaitBits(kButtonPressedEventMask, // bits_to_wait_for – Target bits.
 									true, // If true, clear requested bits before return.
-									false, // I don't think this matters, but I set it to false in case that has better responsiveness. If true, wait for all bits; otherwise any bit.
-									100); // I think this is correct. -  ticks_to_wait – Max ticks to wait. 
+									true, // If true, wait for all bits; otherwise any bit.
+									10); // Max ticks to wait. 
 
 
 		if (button_event & kButtonPressedEventMask) {
+			std::printf("button pressed\n");
 			HandleButtonPress(g_att_server->IsConnected(), ans);
 		}
 
@@ -421,7 +424,7 @@ void OnBleStackOn() {
 	// 5. Create the BLE application task.
     if (!g_ble_task.Initialize(
         "BLE_Task",
-        1024,
+        2048,
         c7222::FreeRtosTask::IdlePriority() + 1,
         BleTask,
         nullptr)) {

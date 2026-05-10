@@ -93,3 +93,7 @@ if(APP_GATT_FILES)
 endif()
 
 c7222_configure_app_target(${APP_NAME} APP_LIB)
+
+# some issues with reading from serial monitor. these might have helped? not really a point in removing them. 
+pico_enable_stdio_usb(${APP_NAME} 1)
+pico_enable_stdio_uart(${APP_NAME} 1)

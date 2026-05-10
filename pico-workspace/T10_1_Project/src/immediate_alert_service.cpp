@@ -92,12 +92,15 @@ void ImmediateAlertService::set_alert_level(module10_ias_spec::AlertLevel level)
     switch (level) {
         case module10_ias_spec::AlertLevel::kNoAlert:
             pwm_->SetDutyCycle(0.0f);
+            current_level_ = level;
             break;
         case module10_ias_spec::AlertLevel::kMildAlert:
             pwm_->SetDutyCycle(0.25f);
+            current_level_ = level;
             break;
         case module10_ias_spec::AlertLevel::kHighAlert:
             pwm_->SetDutyCycle(0.90f);
+            current_level_ = level;
             break;
     }
 }
