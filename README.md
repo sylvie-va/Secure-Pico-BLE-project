@@ -4,9 +4,6 @@ A group project for the course ELEC-C7222 Embedded Programming with Communicatio
 ## Description
 An implementation of secure Alert Notification Services and Immediate Alert Services via Bluetooth on Raspberry Pi Pico 2 W.
 
-## Functionality
-- TBA
-
 ## Authors
 - Dung Vu
 - [Nils-Emil Valkeapää](https://github.com/sylvie-va)
