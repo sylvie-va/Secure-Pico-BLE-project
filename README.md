@@ -8,7 +8,9 @@ An implementation of secure Alert Notification Services and Immediate Alert Serv
 - TBA
 
 ## Authors
-- TBA
+- Dung Vu
+- Nils-Emil Valkeapää
+- Viola Pii Kaitera
 
 ## License
 For open source projects, say how it is licensed.
