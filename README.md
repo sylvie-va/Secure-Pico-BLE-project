@@ -9,8 +9,8 @@ An implementation of secure Alert Notification Services and Immediate Alert Serv
 
 ## Authors
 - Dung Vu
-- Nils-Emil Valkeapää
-- Viola Pii Kaitera
+- [Nils-Emil Valkeapää](https://github.com/sylvie-va)
+- [Viola Pii Kaitera](https://github.com/Violkai)
 
 ## License
 For open source projects, say how it is licensed.
