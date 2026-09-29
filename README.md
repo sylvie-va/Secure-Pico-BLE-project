@@ -10,4 +10,4 @@ An implementation of secure Alert Notification Services and Immediate Alert Serv
 - [Viola Pii Kaitera](https://github.com/Violkai)
 
 ## License
-For open source projects, say how it is licensed.
+This repository is licensed under the terms described in the [`LICENSE`](LICENSE) file.
